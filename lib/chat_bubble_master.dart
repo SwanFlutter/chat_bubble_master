@@ -1,12 +1,3 @@
-/// Chat Bubble Master
-///
-/// A highly customizable Flutter chat bubble package with support for:
-/// - 10 different bubble shapes (clippers)
-/// - Reply, Forward, Copy, Edit, Delete actions
-/// - Emoji reactions
-/// - Read receipts and delivery status
-/// - Avatar display
-/// - Fully themeable via [BubbleTheme]
 library;
 
 import 'package:flutter/material.dart';
@@ -158,50 +149,54 @@ class ChatBubbleMaster extends StatelessWidget {
     return Container(
       margin: margin ?? const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
       child: Column(
-        crossAxisAlignment: _isSent
-            ? CrossAxisAlignment.end
-            : CrossAxisAlignment.start,
+        crossAxisAlignment:
+            _isSent ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: _isSent
-                ? MainAxisAlignment.end
-                : MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.end,
+          Stack(
+            clipBehavior: Clip.none,
             children: [
-              // Avatar for received messages
-              if (!_isSent && showAvatar) ...[
-                BubbleAvatar(
-                  avatarUrl: message.avatarUrl,
-                  senderName: message.senderName,
-                  size: 32,
-                ),
-                const SizedBox(width: 6),
-              ],
+              Row(
+                mainAxisAlignment:
+                    _isSent ? MainAxisAlignment.end : MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  // Avatar for received messages
+                  if (!_isSent && showAvatar) ...[
+                    BubbleAvatar(
+                      avatarUrl: message.avatarUrl,
+                      senderName: message.senderName,
+                      size: 32,
+                    ),
+                    const SizedBox(width: 6),
+                  ],
 
-              ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxWidth),
-                child: bubbleContent,
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    child: bubbleContent,
+                  ),
+
+                  // Spacer for sent messages (no avatar)
+                  if (_isSent && showAvatar) const SizedBox(width: 38),
+                ],
               ),
 
-              // Spacer for sent messages (no avatar)
-              if (_isSent && showAvatar) const SizedBox(width: 38),
+              // Reactions overlapping the bubble
+              if (message.reactions.isNotEmpty)
+                Positioned(
+                  bottom: -12,
+                  left: _isSent ? null : (showAvatar ? 42 : 12),
+                  right: _isSent ? 12 : null,
+                  child: ReactionRow(
+                    reactions: message.reactions,
+                    theme: theme,
+                    onReactionTap: onReactionTap,
+                  ),
+                ),
             ],
           ),
 
-          // Reactions below the bubble
-          if (message.reactions.isNotEmpty)
-            Padding(
-              padding: EdgeInsets.only(
-                left: (!_isSent && showAvatar) ? 38 : 8,
-                right: 8,
-                top: 2,
-              ),
-              child: ReactionRow(
-                reactions: message.reactions,
-                theme: theme,
-                onReactionTap: onReactionTap,
-              ),
-            ),
+          // Extra spacing at bottom if reactions are present to avoid overlap with next message
+          if (message.reactions.isNotEmpty) const SizedBox(height: 12),
         ],
       ),
     );
